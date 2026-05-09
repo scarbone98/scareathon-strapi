@@ -18,13 +18,25 @@ function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function scheduleAvatarItemSync(strapi, result) {
+  if (!result?.documentId) return;
+
+  setTimeout(() => {
+    syncAvatarItem(strapi, result).catch((error) => {
+      strapi.log.error(
+        `Failed to schedule avatar item sync ${result.documentId}: ${error.message}`
+      );
+    });
+  }, 3000);
+}
+
 async function syncAvatarItem(strapi, result) {
   const config = getSyncConfig();
   if (!config || !result?.documentId) return;
 
-  // Strapi v5 publishes by promoting a document version; wait briefly so the
-  // public API returns the newly-published version instead of the previous one.
-  await wait(1000);
+  // Strapi v5 publishes by promoting a document version. This runs from a
+  // timer after the lifecycle returns, so the public API sees the new version.
+  await wait(250);
 
   const item = await strapi.documents('api::avatar-item.avatar-item').findOne({
     documentId: result.documentId,
@@ -52,15 +64,18 @@ async function syncAvatarItem(strapi, result) {
     strapi.log.error(
       `Failed to sync avatar item ${item.documentId}: ${response.status} ${body}`
     );
+    return;
   }
+
+  strapi.log.info(`Synced avatar item ${item.documentId}`);
 }
 
 module.exports = {
   async afterCreate(event) {
-    await syncAvatarItem(strapi, event.result);
+    scheduleAvatarItemSync(strapi, event.result);
   },
 
   async afterUpdate(event) {
-    await syncAvatarItem(strapi, event.result);
+    scheduleAvatarItemSync(strapi, event.result);
   },
 };
