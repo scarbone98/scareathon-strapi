@@ -37,8 +37,19 @@
       ]
     },
     "equipGroup": {
-      "type": "string",
-      "maxLength": 80
+      "type": "enumeration",
+      "enum": [
+        "hat",
+        "back",
+        "pin",
+        "badge",
+        "glasses",
+        "neck",
+        "held",
+        "face_accessory",
+        "earring",
+        "accessory"
+      ]
     },
     "layerOrder": {
       "type": "integer",
