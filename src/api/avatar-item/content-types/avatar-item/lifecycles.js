@@ -19,12 +19,13 @@ function wait(ms) {
 }
 
 function scheduleAvatarItemSync(strapi, result) {
-  if (!result?.documentId) return;
+  const documentId = result?.documentId;
+  if (!documentId) return;
 
   setTimeout(() => {
-    syncAvatarItem(strapi, result).catch((error) => {
+    syncAvatarItem(strapi, documentId).catch((error) => {
       strapi.log.error(
-        `Failed to schedule avatar item sync ${result.documentId}: ${error.message}`
+        `Failed to schedule avatar item sync ${documentId}: ${error.message}`
       );
     });
   }, 3000);
@@ -42,23 +43,14 @@ function scheduleAvatarItemDelete(strapi, result) {
   }, 1000);
 }
 
-async function syncAvatarItem(strapi, result) {
+async function syncAvatarItem(strapi, documentId) {
   const config = getSyncConfig();
-  if (!config || !result?.documentId) return;
+  if (!config || !documentId) return;
 
-  // Strapi v5 publishes by promoting a document version. This runs from a
-  // timer after the lifecycle returns, so the public API sees the new version.
+  // Strapi v5 publishes by promoting a document version. Scareathon fetches the
+  // document after this timer, so avoid querying Strapi from a stale lifecycle
+  // transaction here.
   await wait(250);
-
-  const item = await strapi.documents('api::avatar-item.avatar-item').findOne({
-    documentId: result.documentId,
-    status: 'published',
-    populate: {
-      asset: true,
-    },
-  });
-
-  if (!item?.publishedAt) return;
 
   const response = await fetch(config.url, {
     method: 'POST',
@@ -67,19 +59,19 @@ async function syncAvatarItem(strapi, result) {
       'X-Strapi-Sync-Secret': config.secret,
     },
     body: JSON.stringify({
-      documentId: item.documentId,
+      documentId,
     }),
   });
 
   if (!response.ok) {
     const body = await response.text().catch(() => '');
     strapi.log.error(
-      `Failed to sync avatar item ${item.documentId}: ${response.status} ${body}`
+      `Failed to sync avatar item ${documentId}: ${response.status} ${body}`
     );
     return;
   }
 
-  strapi.log.info(`Synced avatar item ${item.documentId}`);
+  strapi.log.info(`Synced avatar item ${documentId}`);
 }
 
 async function deleteAvatarItem(strapi, result) {
