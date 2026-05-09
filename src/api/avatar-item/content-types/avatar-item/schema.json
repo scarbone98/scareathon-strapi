@@ -1,0 +1,97 @@
+{
+  "kind": "collectionType",
+  "collectionName": "avatar_items",
+  "info": {
+    "singularName": "avatar-item",
+    "pluralName": "avatar-items",
+    "displayName": "Avatar Item",
+    "description": "Avatar item definitions synced into Scareathon"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "maxLength": 80
+    },
+    "itemKey": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true,
+      "maxLength": 120
+    },
+    "slot": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "body",
+        "pants",
+        "shirt",
+        "shoes",
+        "face",
+        "hair",
+        "accessory"
+      ]
+    },
+    "layerOrder": {
+      "type": "integer",
+      "required": true,
+      "default": 40,
+      "min": 0
+    },
+    "rarity": {
+      "type": "enumeration",
+      "required": true,
+      "default": "common",
+      "enum": [
+        "common",
+        "uncommon",
+        "rare",
+        "epic",
+        "legendary"
+      ]
+    },
+    "basePrice": {
+      "type": "integer",
+      "min": 0
+    },
+    "releaseStatus": {
+      "type": "enumeration",
+      "required": true,
+      "default": "draft",
+      "enum": [
+        "draft",
+        "released",
+        "retired"
+      ]
+    },
+    "isTradeable": {
+      "type": "boolean",
+      "required": true,
+      "default": true
+    },
+    "isSellable": {
+      "type": "boolean",
+      "required": true,
+      "default": true
+    },
+    "supplyLimit": {
+      "type": "integer",
+      "min": 1
+    },
+    "asset": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "notes": {
+      "type": "text"
+    }
+  }
+}
