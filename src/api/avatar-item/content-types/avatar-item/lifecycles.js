@@ -20,6 +20,7 @@ async function syncAvatarItem(strapi, result) {
 
   const item = await strapi.documents('api::avatar-item.avatar-item').findOne({
     documentId: result.documentId,
+    status: 'published',
     populate: {
       asset: true,
     },
