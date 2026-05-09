@@ -30,6 +30,18 @@ function scheduleAvatarItemSync(strapi, result) {
   }, 3000);
 }
 
+function scheduleAvatarItemDelete(strapi, result) {
+  if (!result?.documentId) return;
+
+  setTimeout(() => {
+    deleteAvatarItem(strapi, result).catch((error) => {
+      strapi.log.error(
+        `Failed to schedule avatar item delete ${result.documentId}: ${error.message}`
+      );
+    });
+  }, 1000);
+}
+
 async function syncAvatarItem(strapi, result) {
   const config = getSyncConfig();
   if (!config || !result?.documentId) return;
@@ -70,6 +82,34 @@ async function syncAvatarItem(strapi, result) {
   strapi.log.info(`Synced avatar item ${item.documentId}`);
 }
 
+async function deleteAvatarItem(strapi, result) {
+  const config = getSyncConfig();
+  if (!config || !result?.documentId) return;
+
+  const response = await fetch(config.url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Strapi-Sync-Secret': config.secret,
+    },
+    body: JSON.stringify({
+      action: 'delete',
+      documentId: result.documentId,
+      itemKey: result.itemKey,
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    strapi.log.error(
+      `Failed to delete avatar item ${result.documentId}: ${response.status} ${body}`
+    );
+    return;
+  }
+
+  strapi.log.info(`Deleted avatar item ${result.documentId} from Scareathon`);
+}
+
 module.exports = {
   async afterCreate(event) {
     scheduleAvatarItemSync(strapi, event.result);
@@ -77,5 +117,9 @@ module.exports = {
 
   async afterUpdate(event) {
     scheduleAvatarItemSync(strapi, event.result);
+  },
+
+  async afterDelete(event) {
+    scheduleAvatarItemDelete(strapi, event.result);
   },
 };
